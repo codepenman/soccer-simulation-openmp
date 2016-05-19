@@ -2,6 +2,13 @@
 #include "Player.h"
 using namespace std;
 
+Player::Player()	{
+	this->playerId = -1;
+	this->position.x = -1;
+	this->position.y = -1;
+	this->run_radius = 0;
+}
+
 Player::Player(int playerId, Point position, int run_radius)	{
 	this->playerId = playerId;
 	this->position.x = position.x;

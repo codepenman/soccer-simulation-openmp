@@ -10,6 +10,7 @@ class Player	{
 	//radius of the player for display
 
 public:
+	Player();
 	Player(int playerId, Point position, int run_radius);
 	int getPlayerId();
 	Point getPosition();
