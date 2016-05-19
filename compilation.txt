@@ -10,7 +10,7 @@ Turning C code into a Python module is also easy. Simply do the following (shown
 We can now use the Python module as follows :
  >>> import example
  >>> example.fact(5)
- 120
+ 120	
  >>> example.my_mod(7,3)
  1
  >>> example.get_time()

@@ -1,11 +1,11 @@
 #include "iostream"
 #include "Player.h"
-//#include "omp.h"
-//#include <boost/chrono.hpp>
+#include "omp.h"
+#include <boost/chrono.hpp>
 #include "Main.h"
 
 using namespace std;
-//using namespace boost::chrono;
+using namespace boost::chrono;
 
 /*Breadth and Height of Football ground*/
 int BREADTH = 300;
@@ -124,7 +124,7 @@ void play()	{
 
 	int i = 0;
     
-//    auto dt_s = high_resolution_clock::now();
+    auto dt_s = high_resolution_clock::now();
 
 	while(i++ < 100000)	{
 
@@ -135,16 +135,17 @@ void play()	{
 		}
 	}
 
-  //  auto dt = duration_cast<nanoseconds> (high_resolution_clock::now() - dt_s); 
-    //cout << "Sequential = " << dt.count() << " ns" << "\n";
+    auto dt = duration_cast<nanoseconds> (high_resolution_clock::now() - dt_s); 
+    cout << "Sequential = " << dt.count() << " ns" << "\n";
 
-    //dt_s = high_resolution_clock::now();
+    dt_s = high_resolution_clock::now();
 
 	i = 0;
-//	#pragma omp parallel
+	#pragma omp parallel
 	{
+		cout << "Number of threads: " << omp_get_thread_num() << endl;
 		while(i++ < 100000)	{	   		
-//	   		#pragma omp parallel for schedule(dynamic)
+	   		#pragma omp parallel for schedule(dynamic)
 			for(int currentPlayer = 0; currentPlayer < 10; currentPlayer++)	{
 				int loop = 0;
 
@@ -154,8 +155,8 @@ void play()	{
 		}		
 	}
 
-    //dt = duration_cast<nanoseconds> (high_resolution_clock::now() - dt_s); 
-    //cout << "Parallel = " << dt.count() << " ns" << "\n";
+    dt = duration_cast<nanoseconds> (high_resolution_clock::now() - dt_s); 
+    cout << "Parallel = " << dt.count() << " ns" << "\n";
 }
 
 void stop()	{
