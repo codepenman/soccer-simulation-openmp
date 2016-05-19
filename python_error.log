@@ -1,0 +1,19 @@
+145
+145
+135
+135
+15
+155
+155
+165
+165
+285
+None
+
+Traceback (most recent call last):
+  File "uianimate.py", line 89, in <module>
+    FootballGround()
+  File "uianimate.py", line 26, in __init__
+    for point in points:
+TypeError: 'NoneType' object is not iterable
+

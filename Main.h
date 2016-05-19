@@ -4,9 +4,9 @@
 #include "Point.h"
 
 //List of methods exposed to Python API Call
-void getPlayerPositions();
-Point getBallPosition();
-void play();
+extern Point* getPlayerPositions();
+extern Point getBallPosition();
+extern void play();
 void stop();
 int getBoundaryBreadth();
 int getBoundaryHeight();
