@@ -8,7 +8,7 @@ class Ball	{
 	//define radius of the ball
 
 public:
-	Ball(Point position);	
+	Ball();	
 	Point getPosition();
 	void setPosition(Point Point);
 };

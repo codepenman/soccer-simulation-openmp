@@ -1,5 +1,7 @@
 #include "iostream"
+#include "stdlib.h"
 #include "Player.h"
+#include "Ball.h"
 #include "omp.h"
 #include <boost/chrono.hpp>
 #include "Main.h"
@@ -10,7 +12,9 @@ using namespace boost::chrono;
 /*Breadth and Height of Football ground*/
 int BREADTH = 300;
 int HEIGHT = 200;
+
 Player players[10];
+Ball ball;
 
 /********************************************************************************************************************
 		View of ground
@@ -39,7 +43,13 @@ Player players[10];
 		(0, 0)
 ***********************************************************************************************************************/
 
-void initPlayers()	{
+void initPositions()	{
+
+	Point ball_position;
+	ball_position.x = 150;
+	ball_position.y = 100;
+
+	ball.setPosition(ball_position);
 
 /***1 - 5 belongs to team - 1***/
 	Point p1_pos;
@@ -106,7 +116,7 @@ void initPlayers()	{
 
 int main()	{
 
-	initPlayers();
+	initPositions();
 
 	cout << "Players are created \n";
 
@@ -120,7 +130,7 @@ int main()	{
 
 void play()	{
 	
-	initPlayers();
+	initPositions();
 
 	int i = 0;
     
@@ -141,17 +151,48 @@ void play()	{
     dt_s = high_resolution_clock::now();
 
 	i = 0;
-	#pragma omp parallel
-	{
-		cout << "Number of threads: " << omp_get_thread_num() << endl;
-		while(i++ < 100000)	{	   		
-	   		#pragma omp parallel for schedule(dynamic)
-			for(int currentPlayer = 0; currentPlayer < 10; currentPlayer++)	{
-				int loop = 0;
+	
+	//I assume p1 has the ball first, p1 location should be reachable to ball location..
+	Point currBallPosition = ball.getPosition();
 
-				while(loop++ < 100)	{
-				}
+	Point playerPosition;
+	playerPosition.x = currBallPosition.x - 1;
+	playerPosition.y = currBallPosition.y - 1;	
+	players[0].setPosition(playerPosition);
+
+	//P1 got to the ball first and kicked the ball to player with id 2 in his team
+	int x = players[1].getPosition().x;
+	int y = players[1].getPosition().y;
+
+	Point nextBallPosition;
+	nextBallPosition.x = x;
+	nextBallPosition.y = y;
+
+	//Calculate slope and constant of the line equation(y = mx + c) given start and end point
+	float slope, constant;
+	slope = (float)(nextBallPosition.y - currBallPosition.y) / (float)(nextBallPosition.x - currBallPosition.x);
+	constant = nextBallPosition.y - (slope * nextBallPosition.x);
+
+	//#pragma omp parallel
+	{	
+		while(i++ < 100000)	{	   		
+			//Update the location of ball by unit in x direction and mx + c in y direction.
+			currBallPosition.x++;
+			//Stmt below depends on above statement to finish evaluation..
+			currBallPosition.y = slope * currBallPosition.x + constant;
+
+			/* Loop over all the players and perform these operations
+			a. Check if ball is in the vicinity of any player
+			b. If yes then update player variable which tells player is having ball n come out of the loop
+			c. If no then relevant player should run in the direction of ball*/
+	   		//#pragma omp parallel for schedule(dynamic)
+			for(int currentPlayer = 0; currentPlayer < 10; currentPlayer++)	{
+
 			}		
+
+			/* If there is player in the vicinity of the ball randomly select my team player near by to you
+			and kick to him, else just continue */
+
 		}		
 	}
 
@@ -168,11 +209,7 @@ void getPlayerPositions()	{
 }
 
 Point getBallPosition()	{
-	Point p9_pos;
-	p9_pos.x = 165;
-	p9_pos.y = 125;
-
-	return p9_pos;
+	return ball.getPosition();
 }
 
 int getBoundaryBreadth()	{
