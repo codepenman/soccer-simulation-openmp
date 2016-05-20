@@ -1,5 +1,6 @@
 #include "iostream"
 #include "stdlib.h"
+#include "Math.h"
 #include "Player.h"
 #include "Ball.h"
 #include "omp.h"
@@ -183,11 +184,16 @@ void play()	{
 
 			/* Loop over all the players and perform these operations
 			a. Check if ball is in the vicinity of any player
-			b. If yes then update player variable which tells player is having ball n come out of the loop
+			b. If yes then update player variable which tells player is having ball
 			c. If no then relevant player should run in the direction of ball*/
 	   		//#pragma omp parallel for schedule(dynamic)
 			for(int currentPlayer = 0; currentPlayer < 10; currentPlayer++)	{
-
+				bool isInVicinity = isPlayerInBallVicinity(players[currentPlayer]);
+				if(isInVicinity)	{
+					players[currentPlayer].setNearToBall(true);
+				}else	{
+					runTowardsBall(players[currentPlayer]);
+				}
 			}		
 
 			/* If there is player in the vicinity of the ball randomly select my team player near by to you
@@ -198,6 +204,35 @@ void play()	{
 
     dt = duration_cast<nanoseconds> (high_resolution_clock::now() - dt_s); 
     cout << "Parallel = " << dt.count() << " ns" << "\n";
+}
+
+/*#pragma omp declare simd 
+Refer to http://www.hpctoday.com/hpc-labs/explicit-vector-programming-with-openmp-4-0-simd-extensions/ */
+bool isPlayerInBallVicinity(Player currentPlayer)	{
+	/* Check Distance between current player location and ball location
+	If less than Player run radius return true, else false */
+	float distance = sqrt( pow((currentPlayer.x - ball.getPosition().x), 2) 
+						+ pow((currentPlayer.y - ball.getPosition().y), 2) );
+	if(distance <= currentPlayer.getRunRadius())	{
+		return true;
+	}		
+	return false;
+}
+
+/*#pragma omp declare simd
+Refer to http://www.hpctoday.com/hpc-labs/explicit-vector-programming-with-openmp-4-0-simd-extensions/ */
+void runTowardsBall(Player player)	{
+	if(shouldRun(player))	{
+
+	}else {
+		//Move the player to a point by selecting a random point with in run radius circle
+	}
+}
+
+/* Check the location of player and location of ball, then decide weather this player can run towards ball
+or not */
+bool shouldRun(Player player)	{
+
 }
 
 void stop()	{
