@@ -1,16 +1,21 @@
 #include "iostream"
+#include "stdlib.h"
+#include "Math.h"
 #include "Player.h"
-// #include "omp.h"
-//#include <boost/chrono.hpp>
+#include "Ball.h"
+#include "omp.h"
+#include <boost/chrono.hpp>
 #include "Main.h"
 
 using namespace std;
-// using namespace boost::chrono;
+using namespace boost::chrono;
 
 /*Breadth and Height of Football ground*/
 int BREADTH = 300;
 int HEIGHT = 200;
+
 Player players[10];
+Ball ball;
 
 /********************************************************************************************************************
 		View of ground
@@ -39,7 +44,13 @@ Player players[10];
 		(0, 0)
 ***********************************************************************************************************************/
 
-void initPlayers()	{
+void initPositions()	{
+
+	Point ball_position;
+	ball_position.x = 150;
+	ball_position.y = 100;
+
+	ball.setPosition(ball_position);
 
 /***1 - 5 belongs to team - 1***/
 	Point p1_pos;
@@ -106,33 +117,25 @@ void initPlayers()	{
 
 int main()	{
 
-	initPlayers();
+	initPositions();
 
 	cout << "Players are created \n";
 
 	cout << "P1->X: " << players[0].getPosition().x << "\n";
 
 	cout << "Starting to play\n";
-		
-	Point *points = getPlayerPositions();
-
-	for (int i = 0; i<10; i++) {
-		cout <<(points +i)->x<<endl;
-	}
-
 	play();
-
 
 	return 1;
 }
 
 void play()	{
 	
-	initPlayers();
+	initPositions();
 
 	int i = 0;
     
-  //  auto dt_s = high_resolution_clock::now();
+    auto dt_s = high_resolution_clock::now();
 
 	while(i++ < 100000)	{
 
@@ -143,28 +146,93 @@ void play()	{
 		}
 	}
 
-    //auto dt = duration_cast<nanoseconds> (high_resolution_clock::now() - dt_s); 
-    //cout << "Sequential = " << dt.count() << " ns" << "\n";
+    auto dt = duration_cast<nanoseconds> (high_resolution_clock::now() - dt_s); 
+    cout << "Sequential = " << dt.count() << " ns" << "\n";
 
-    //dt_s = high_resolution_clock::now();
+    dt_s = high_resolution_clock::now();
 
 	i = 0;
-	// #pragma omp parallel
-	{
-		//cout << "Number of threads: " << omp_get_thread_num() << endl;
-		while(i++ < 100000)	{	   		
-	   //		#pragma omp parallel for schedule(dynamic)
-			for(int currentPlayer = 0; currentPlayer < 10; currentPlayer++)	{
-				int loop = 0;
+	
+	//I assume p1 has the ball first, p1 location should be reachable to ball location..
+	Point currBallPosition = ball.getPosition();
 
-				while(loop++ < 100)	{
+	Point playerPosition;
+	playerPosition.x = currBallPosition.x - 1;
+	playerPosition.y = currBallPosition.y - 1;	
+	players[0].setPosition(playerPosition);
+
+	//P1 got to the ball first and kicked the ball to player with id 2 in his team
+	int x = players[1].getPosition().x;
+	int y = players[1].getPosition().y;
+
+	Point nextBallPosition;
+	nextBallPosition.x = x;
+	nextBallPosition.y = y;
+
+	//Calculate slope and constant of the line equation(y = mx + c) given start and end point
+	float slope, constant;
+	slope = (float)(nextBallPosition.y - currBallPosition.y) / (float)(nextBallPosition.x - currBallPosition.x);
+	constant = nextBallPosition.y - (slope * nextBallPosition.x);
+
+	//#pragma omp parallel
+	{	
+		while(i++ < 100000)	{	   		
+			//Update the location of ball by unit in x direction and mx + c in y direction.
+			currBallPosition.x++;
+			//Stmt below depends on above statement to finish evaluation..
+			currBallPosition.y = slope * currBallPosition.x + constant;
+
+			/* Loop over all the players and perform these operations
+			a. Check if ball is in the vicinity of any player
+			b. If yes then update player variable which tells player is having ball
+			c. If no then relevant player should run in the direction of ball*/
+	   		//#pragma omp parallel for schedule(dynamic)
+			for(int currentPlayer = 0; currentPlayer < 10; currentPlayer++)	{
+				bool isInVicinity = isPlayerInBallVicinity(players[currentPlayer]);
+				if(isInVicinity)	{
+					players[currentPlayer].setNearToBall(true);
+				}else	{
+					runTowardsBall(players[currentPlayer]);
 				}
 			}		
+
+			/* If there is player in the vicinity of the ball randomly select my team player near by to you
+			and kick to him, else just continue */
+
 		}		
 	}
 
-    //dt = duration_cast<nanoseconds> (high_resolution_clock::now() - dt_s); 
-    //cout << "Parallel = " << dt.count() << " ns" << "\n";
+    dt = duration_cast<nanoseconds> (high_resolution_clock::now() - dt_s); 
+    cout << "Parallel = " << dt.count() << " ns" << "\n";
+}
+
+/*#pragma omp declare simd 
+Refer to http://www.hpctoday.com/hpc-labs/explicit-vector-programming-with-openmp-4-0-simd-extensions/ */
+bool isPlayerInBallVicinity(Player currentPlayer)	{
+	/* Check Distance between current player location and ball location
+	If less than Player run radius return true, else false */
+	float distance = sqrt( pow((currentPlayer.x - ball.getPosition().x), 2) 
+						+ pow((currentPlayer.y - ball.getPosition().y), 2) );
+	if(distance <= currentPlayer.getRunRadius())	{
+		return true;
+	}		
+	return false;
+}
+
+/*#pragma omp declare simd
+Refer to http://www.hpctoday.com/hpc-labs/explicit-vector-programming-with-openmp-4-0-simd-extensions/ */
+void runTowardsBall(Player player)	{
+	if(shouldRun(player))	{
+
+	}else {
+		//Move the player to a point by selecting a random point with in run radius circle
+	}
+}
+
+/* Check the location of player and location of ball, then decide weather this player can run towards ball
+or not */
+bool shouldRun(Player player)	{
+
 }
 
 void stop()	{
@@ -185,11 +253,7 @@ Point* getPlayerPositions()	{
 }
 
 Point getBallPosition()	{
-	Point p9_pos;
-	p9_pos.x = 165;
-	p9_pos.y = 125;
-
-	return p9_pos;
+	return ball.getPosition();
 }
 
 int getBoundaryBreadth()	{

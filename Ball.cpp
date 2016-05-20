@@ -2,9 +2,7 @@
 #include "Ball.h"
 using namespace std;
 
-Ball::Ball(Point position)	{
-	this->position.x = position.x;
-	this->position.y = position.y;
+Ball::Ball()	{
 }
 
 Point Ball::getPosition()	{
