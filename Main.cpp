@@ -18,7 +18,7 @@ int PLAYER_VICINITY_TO_PLAY = 40;
 int PLAYER_VICINITY_TO_CAPTURE = 20;
 
 /*Time for which simulation will continue. Basically, count of while loop iterations*/
-int TIME = 10;
+long TIME = 1000000;
 
 Player players[10];
 Ball ball;
@@ -216,28 +216,8 @@ void updateBall() {
 void play()	{
 	
 	initPositions();
-
-	int i = 0;
-    
     auto dt_s = high_resolution_clock::now();
-
-	while(i++ < TIME)	{
-
-		for(int currentPlayer = 0; currentPlayer < 10; currentPlayer++)	{
-			int loop = 0;
-
-			while(loop++ < 10)	{
-			}
-		}
-	}
-
-    auto dt = duration_cast<nanoseconds> (high_resolution_clock::now() - dt_s); 
-    cout << "Sequential = " << dt.count() << " ns" << "\n";
-
-    dt_s = high_resolution_clock::now();
-
-	i = 0;
-	
+    
 	//I assume p1 has the ball first, p1 location should be reachable to ball location..
 	Point currBallPosition = ball.getPosition();
 
@@ -259,16 +239,19 @@ void play()	{
 	slope = (double)(nextBallPosition.y - currBallPosition.y) / (double)(nextBallPosition.x - currBallPosition.x);
 	constant = nextBallPosition.y - (slope * nextBallPosition.x);
 */
-	int j = 0;
 	
+	omp_set_num_threads(16);
 	#pragma omp parallel
-	{	
+	{
+		int i = 0;
+		cout<<"Printing threads.."<<endl;
+		cout<<omp_get_thread_num()<<endl;	
 		while(i++ < TIME) {
 			/* Loop over all the players and perform these operations
 			a. Check if ball is in the vicinity of any player
 			b. If yes then update player variable which tells player is having ball
 			c. If no then relevant player should run in the direction of ball*/
-	   		#pragma omp for
+	   		#pragma omp for nowait
 			for(int currentPlayer = 0; currentPlayer < 10; currentPlayer++)	{
 
 				bool isInVicinity = isPlayerInBallVicinity(players[currentPlayer]);
@@ -279,24 +262,24 @@ void play()	{
 					players[currentPlayer].setNearToBall(false);
 					runTowardsBall(&players[currentPlayer]);
 				}
-/*
+
 				// displaying updated position
-				#pragma omp critical
-				{
-					players[currentPlayer].display();
-				}*/
-			}		
-			#pragma omp single	
+				// #pragma omp critical
+				// {
+					// players[currentPlayer].display();
+				// }
+			}
+			#pragma omp single nowait	
 			{
 				updateBall();
 			}
 			/* If there is player in the vicinity of the ball randomly select my team player near by to you
 			and kick to him, else just continue */
-
+			// cout<<i<<"->"<<omp_get_thread_num()<<endl;
 		}		
 	}
 
-    dt = duration_cast<nanoseconds> (high_resolution_clock::now() - dt_s); 
+    auto dt = duration_cast<nanoseconds> (high_resolution_clock::now() - dt_s); 
     cout << "Parallel = " << dt.count() << " ns" << "\n";
 }
 
@@ -305,17 +288,6 @@ int main()	{
 	cout << "Players are created \n";
 	cout << "P1->X: " << players[0].getPosition().x << "\n";
 	cout << "Starting to play\n";
-	// Point p;
-	// p.x = 400;
-	// p.y = 400;
-	// players[0].hitBall(&ball, p, 2);
-	// players[0].hitBall(&ball, p, 1);
-	
-	// p.x = 0;
-	// p.y = 0;
-	// players[0].hitBall(&ball, p, 2);
-
-	ball.display();
 	play();
 	return 1;
 }
