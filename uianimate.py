@@ -5,6 +5,7 @@ import time
 import random
 import Main
 import thread
+import copy
 
 # Ground dimenstions : w x h : (45-90m) x (90-120m)
 class FootballGround(object):
@@ -14,9 +15,12 @@ class FootballGround(object):
             print point.x, point.y
 
     def animation(self):
+        print "In Animation..."
         while self.gameOn:
             time.sleep(0.2)
-            oldPoints = self.points
+            oldPoints = []
+            for point in self.points:
+                oldPoints.append(point)
 
             self.points = []
             for i in xrange(10):
@@ -38,7 +42,7 @@ class FootballGround(object):
 
     def play(self):
         Main.play()
-        #self.gameOn = False
+        self.gameOn = False
 
     def __init__(self):
         self.gameOn = True

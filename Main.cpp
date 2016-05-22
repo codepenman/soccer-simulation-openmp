@@ -5,6 +5,7 @@
 #include "Ball.h"
 #include "omp.h"
 #include <boost/chrono.hpp>
+#include <unistd.h>
 #include "Main.h"
 
 using namespace std;
@@ -18,10 +19,12 @@ int PLAYER_VICINITY_TO_PLAY = 40;
 int PLAYER_VICINITY_TO_CAPTURE = 20;
 
 /*Time for which simulation will continue. Basically, count of while loop iterations*/
-long TIME = 1000000;
+long TIME = 100;
 
 Player players[10];
 Ball ball;
+
+unsigned int microseconds;
 
 /********************************************************************************************************************
 		View of ground
@@ -240,13 +243,14 @@ void play()	{
 	constant = nextBallPosition.y - (slope * nextBallPosition.x);
 */
 	
-	omp_set_num_threads(16);
+	omp_set_num_threads(2);
 	#pragma omp parallel
 	{
 		int i = 0;
 		cout<<"Printing threads.."<<endl;
 		cout<<omp_get_thread_num()<<endl;	
 		while(i++ < TIME) {
+			usleep(200000);
 			/* Loop over all the players and perform these operations
 			a. Check if ball is in the vicinity of any player
 			b. If yes then update player variable which tells player is having ball
@@ -281,6 +285,10 @@ void play()	{
 
     auto dt = duration_cast<nanoseconds> (high_resolution_clock::now() - dt_s); 
     cout << "Parallel = " << dt.count() << " ns" << "\n";
+}
+
+void init() {
+
 }
 
 int main()	{
