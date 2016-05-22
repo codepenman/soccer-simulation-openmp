@@ -204,7 +204,7 @@ void updateBall() {
 	ball.setPosition(p);		
 }
 
-void play()	{
+long play(int threadNum)	{
 	
 	initPositions();
     auto dt_s = high_resolution_clock::now();
@@ -220,14 +220,14 @@ void play()	{
 	//As a start , player 1 will hit the ball to player 2
 	players[0].hitBall(&ball, players[1].getCurrentPosition(), 3);
 
-	omp_set_num_threads(4);
+	omp_set_num_threads(threadNum);
 	#pragma omp parallel
 	{
 		int i = 0;
-		cout<<"Printing threads.."<<endl;
-		cout<<omp_get_thread_num()<<endl;	
+		// cout<<"Printing threads.."<<endl;
+		// cout<<omp_get_thread_num()<<endl;	
 		while(i++ < TIME) {
-			usleep(200000);
+			// usleep(200000);
 			/* Loop over all the players and perform these operations
 			a. Check if ball is in the vicinity of any player
 			b. If yes then update player variable which tells player is having ball
@@ -253,6 +253,7 @@ void play()	{
 
     auto dt = duration_cast<nanoseconds> (high_resolution_clock::now() - dt_s); 
     cout << "Parallel = " << dt.count() << " ns" << "\n";
+    return dt.count();
 }
 
 void init() {
@@ -264,6 +265,6 @@ int main()	{
 	cout << "Players are created \n";
 	cout << "P1->X: " << players[0].getCurrentPosition().x << "\n";
 	cout << "Starting to play\n";
-	play();
+	play(4);
 	return 1;
 }
