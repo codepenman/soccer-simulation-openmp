@@ -2,6 +2,7 @@
 #define PLAYER_H
 
 #include "Point.h"
+#include "Ball.h"
 
 class Player	{
 	int playerId;
@@ -19,6 +20,7 @@ public:
 	void setNearToBall(bool nearToBall);
 	bool isNearToBall();
 	int getRunRadius();
+	void hitBall(Ball *ball, Point destination, int unitForce);
+	void display();
 };
-
 #endif

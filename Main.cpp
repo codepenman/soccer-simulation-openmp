@@ -1,6 +1,6 @@
 #include "iostream"
 #include "stdlib.h"
-#include "Math.h"
+#include "math.h"
 #include "Player.h"
 #include "Ball.h"
 #include "omp.h"
@@ -13,6 +13,12 @@ using namespace boost::chrono;
 /*Breadth and Height of Football ground*/
 int BREADTH = 300;
 int HEIGHT = 200;
+
+int PLAYER_VICINITY_TO_PLAY = 40;
+int PLAYER_VICINITY_TO_CAPTURE = 20;
+
+/*Time for which simulation will continue. Basically, count of while loop iterations*/
+int TIME = 10;
 
 Player players[10];
 Ball ball;
@@ -43,7 +49,6 @@ Ball ball;
 		|______________________|____________________|______________________> X - Axis
 		(0, 0)
 ***********************************************************************************************************************/
-
 void initPositions()	{
 
 	Point ball_position;
@@ -51,7 +56,6 @@ void initPositions()	{
 	ball_position.y = 100;
 
 	ball.setPosition(ball_position);
-
 /***1 - 5 belongs to team - 1***/
 	Point p1_pos;
 	p1_pos.x = 145;
@@ -115,18 +119,98 @@ void initPositions()	{
 	players[9] = p10;
 }
 
-int main()	{
+/*#pragma omp declare simd 
+Refer to http://www.hpctoday.com/hpc-labs/explicit-vector-programming-with-openmp-4-0-simd-extensions/ */
+bool isPlayerInBallVicinity(Player currentPlayer)	{
+	/* Check Distance between current player location and ball location
+	If less than Player run radius return true, else false */
+	double distance = sqrt( pow((currentPlayer.getPosition().x - ball.getPosition().x), 2) 
+						+ pow((currentPlayer.getPosition().y - ball.getPosition().y), 2) );
+	if(distance <= currentPlayer.getRunRadius())	{
+		return true;
+	}		
+	return false;
+}
 
-	initPositions();
+/*#pragma omp declare simd
+Refer to http://www.hpctoday.com/hpc-labs/explicit-vector-programming-with-openmp-4-0-simd-extensions/ */
+void runTowardsBall(Player* currentPlayer)	{
+	double distance = sqrt( pow(((*currentPlayer).getPosition().x - ball.getPosition().x), 2) 
+						+ pow(((*currentPlayer).getPosition().y - ball.getPosition().y), 2) );
 
-	cout << "Players are created \n";
+	if(distance < 10)	{
+		double time = distance / 2;
+		double xUnit = (ball.getPosition().x - (*currentPlayer).getPosition().x) / time;
+		double yUnit = (ball.getPosition().y - (*currentPlayer).getPosition().y) / time;	
 
-	cout << "P1->X: " << players[0].getPosition().x << "\n";
+		Point position = (*currentPlayer).getPosition();
+		position.x += xUnit;
+		position.y += yUnit;
+		(*currentPlayer).setPosition(position);
+	}/*else {
+		//Move the player to a point by selecting a random point with in run radius circle
+		Point position;
+		double xMovement = rand() % (*currentPlayer).getRunRadius();
+		double yMovement = rand() % (*currentPlayer).getRunRadius();
 
-	cout << "Starting to play\n";
-	play();
+		position = (*currentPlayer).getPosition();
+		position.x += xMovement;
+		position.y += yMovement;
 
-	return 1;
+		(*currentPlayer).setPosition(position);
+	}*/
+}
+
+
+void stop()	{
+
+}
+
+Point getPlayerPositions(int i)	{
+	return players[i].getPosition();
+}
+
+Point getBallPosition()	{
+	return ball.getPosition();
+}
+
+int getBoundaryBreadth()	{
+	return BREADTH;
+}
+
+int getBoundaryHeight()	{
+	return HEIGHT;
+}
+
+void updateBall() {
+	Point currBallPosition = ball.getPosition();
+
+	Point p;
+	// Move ball by unit distance. We can not move that in parallel threads.
+	//Update the location of ball by unit in x direction and mx + c in y direction.
+	p.x = currBallPosition.x + ball.getXMovement();
+
+	//Stmt below depends on above statement to finish evaluation..
+	p.y = currBallPosition.y + ball.getYMovement();
+
+	/* Ball is deflected if it reaches the boudary edges in X-Driection */
+	if(p.x == 0 || p.x == BREADTH)	{
+		ball.setXMovement(ball.getXMovement() * -1);
+/*		cout<<"#####################################################"
+		<<"Deflecting on x"<<endl;
+*/	}
+
+	/* Ball is deflected if it reaches the boudary edges in Y-Direction */
+	if(p.y == 0 || p.y == HEIGHT)	{
+		ball.setYMovement(ball.getYMovement() * -1);
+/*		cout<<"YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY"
+		<<"Deflecting on y"<<endl;*/		
+	}
+
+/*	cout<<ball.getXMovement()<<"===="<<ball.getYMovement()<<endl;
+	cout << p.x <<"===="<<p.y<<endl;
+*/	ball.setPosition(p);		
+	//ball.display();
 }
 
 void play()	{
@@ -137,11 +221,12 @@ void play()	{
     
     auto dt_s = high_resolution_clock::now();
 
-	while(i++ < 100000)	{
+	while(i++ < TIME)	{
 
 		for(int currentPlayer = 0; currentPlayer < 10; currentPlayer++)	{
 			int loop = 0;
-			while(loop++ < 100)	{
+
+			while(loop++ < 10)	{
 			}
 		}
 	}
@@ -170,32 +255,41 @@ void play()	{
 	nextBallPosition.y = y;
 
 	//Calculate slope and constant of the line equation(y = mx + c) given start and end point
-	float slope, constant;
-	slope = (float)(nextBallPosition.y - currBallPosition.y) / (float)(nextBallPosition.x - currBallPosition.x);
+/*	double slope, constant;
+	slope = (double)(nextBallPosition.y - currBallPosition.y) / (double)(nextBallPosition.x - currBallPosition.x);
 	constant = nextBallPosition.y - (slope * nextBallPosition.x);
-
-	//#pragma omp parallel
+*/
+	int j = 0;
+	
+	#pragma omp parallel
 	{	
-		while(i++ < 100000)	{	   		
-			//Update the location of ball by unit in x direction and mx + c in y direction.
-			currBallPosition.x++;
-			//Stmt below depends on above statement to finish evaluation..
-			currBallPosition.y = slope * currBallPosition.x + constant;
-
+		while(i++ < TIME) {
 			/* Loop over all the players and perform these operations
 			a. Check if ball is in the vicinity of any player
 			b. If yes then update player variable which tells player is having ball
 			c. If no then relevant player should run in the direction of ball*/
-	   		//#pragma omp parallel for schedule(dynamic)
+	   		#pragma omp for
 			for(int currentPlayer = 0; currentPlayer < 10; currentPlayer++)	{
-				bool isInVicinity = isPlayerInBallVicinity(players[currentPlayer]);
-				if(isInVicinity)	{
-					players[currentPlayer].setNearToBall(true);
-				}else	{
-					runTowardsBall(players[currentPlayer]);
-				}
-			}		
 
+				bool isInVicinity = isPlayerInBallVicinity(players[currentPlayer]);
+				if (isInVicinity) {
+					players[currentPlayer].setNearToBall(true);
+					players[currentPlayer].hitBall(&ball, players[rand()%10].getPosition(), 3);
+				} else {
+					players[currentPlayer].setNearToBall(false);
+					runTowardsBall(&players[currentPlayer]);
+				}
+/*
+				// displaying updated position
+				#pragma omp critical
+				{
+					players[currentPlayer].display();
+				}*/
+			}		
+			#pragma omp single	
+			{
+				updateBall();
+			}
 			/* If there is player in the vicinity of the ball randomly select my team player near by to you
 			and kick to him, else just continue */
 
@@ -206,51 +300,22 @@ void play()	{
     cout << "Parallel = " << dt.count() << " ns" << "\n";
 }
 
-/*#pragma omp declare simd 
-Refer to http://www.hpctoday.com/hpc-labs/explicit-vector-programming-with-openmp-4-0-simd-extensions/ */
-bool isPlayerInBallVicinity(Player currentPlayer)	{
-	/* Check Distance between current player location and ball location
-	If less than Player run radius return true, else false */
-	float distance = sqrt( pow((currentPlayer.x - ball.getPosition().x), 2) 
-						+ pow((currentPlayer.y - ball.getPosition().y), 2) );
-	if(distance <= currentPlayer.getRunRadius())	{
-		return true;
-	}		
-	return false;
-}
+int main()	{
+	initPositions();
+	cout << "Players are created \n";
+	cout << "P1->X: " << players[0].getPosition().x << "\n";
+	cout << "Starting to play\n";
+	// Point p;
+	// p.x = 400;
+	// p.y = 400;
+	// players[0].hitBall(&ball, p, 2);
+	// players[0].hitBall(&ball, p, 1);
+	
+	// p.x = 0;
+	// p.y = 0;
+	// players[0].hitBall(&ball, p, 2);
 
-/*#pragma omp declare simd
-Refer to http://www.hpctoday.com/hpc-labs/explicit-vector-programming-with-openmp-4-0-simd-extensions/ */
-void runTowardsBall(Player player)	{
-	if(shouldRun(player))	{
-
-	}else {
-		//Move the player to a point by selecting a random point with in run radius circle
-	}
-}
-
-/* Check the location of player and location of ball, then decide weather this player can run towards ball
-or not */
-bool shouldRun(Player player)	{
-
-}
-
-void stop()	{
-
-}
-
-void getPlayerPositions()	{
-
-}
-
-Point getBallPosition()	{
-	return ball.getPosition();
-}
-
-int getBoundaryBreadth()	{
-	return BREADTH;
-}
-
-int getBoundaryHeight()	{
-	return HEIGHT;
+	ball.display();
+	play();
+	return 1;
 }

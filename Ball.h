@@ -5,12 +5,22 @@
 
 class Ball	{
 	Point position;
-	//define radius of the ball
+	int radius;
+	double xUnit;
+	double yUnit;
+	Point destination;
 
 public:
 	Ball();	
 	Point getPosition();
 	void setPosition(Point Point);
+	Point getDestination();
+	void setDestination(Point point);
+	void setXMovement(double x);
+	void setYMovement(double y);
+	double getXMovement();
+	double getYMovement();
+	void display();
 };
 
 #endif

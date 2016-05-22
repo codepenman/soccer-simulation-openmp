@@ -1,5 +1,7 @@
 #include <iostream>
 #include "Player.h"
+#include "Ball.h"
+#include "math.h"
 using namespace std;
 
 Player::Player()	{
@@ -41,4 +43,27 @@ bool Player::isNearToBall()	{
 
 int Player::getRunRadius()	{
 	return run_radius;
+}
+
+void Player::hitBall(Ball *ball, Point destination, int unitForce) {
+	Point ballPosition = (*ball).getPosition();
+	double distance = sqrt( pow((destination.x - ballPosition.x), 2) 
+		+ pow((destination.y - ballPosition.y), 2));
+	double time = distance / unitForce;
+	double xUnit = (destination.x - ballPosition.x) / time;
+	double yUnit = (destination.y - ballPosition.y) / time;
+
+	(*ball).setXMovement(xUnit);
+	(*ball).setYMovement(yUnit);
+	(*ball).setDestination(destination);
+	// cout<<"Ball :"<<ballPosition.x<<","<<ballPosition.y<<endl;
+	// cout<<"Destination :"<<destination.x<<","<<destination.y<<endl;
+	// cout<<"Distance :"<<distance<<endl;
+	// cout<<"Time :"<<time<<endl;
+	// cout<<xUnit<<"\t"<<yUnit<<endl;
+}
+
+void Player::display() {
+	cout<<"Player: { id="<<this->playerId<<", position=("
+		<<this->position.x<<","<<this->position.y<<"), nearToBall="<<this->nearToBall<<"}"<<endl;
 }

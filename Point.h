@@ -1,10 +1,11 @@
 #ifndef POINT_H
 #define POINT_H
 
-struct Point
+class Point
 {
-    int x;
-    int y;
+public:
+    double x;
+    double y;
 };
 
 #endif
