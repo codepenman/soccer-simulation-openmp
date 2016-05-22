@@ -286,7 +286,8 @@ void play()	{
 					players[currentPlayer].display();
 				}*/
 			}		
-			#pragma omp single	{
+			#pragma omp single	
+			{
 				updateBall();
 			}
 			/* If there is player in the vicinity of the ball randomly select my team player near by to you
