@@ -19,7 +19,7 @@ int DISTANCE_TO_BALL_TO_RUN = 10;
 //int PLAYER_VICINITY_TO_CAPTURE = 20;
 
 /*Time for which simulation will continue. Basically, count of while loop iterations*/
-long TIME = 100;
+long TIME = 100000;
 
 Player players[10];
 Ball ball;
@@ -220,7 +220,7 @@ long play(int threadNum)	{
 	//As a start , player 1 will hit the ball to player 2
 	players[0].hitBall(&ball, players[1].getCurrentPosition(), 3);
 
-	omp_set_num_threads(threadNum);
+	// omp_set_num_threads(threadNum);
 	#pragma omp parallel
 	{
 		int i = 0;
@@ -256,8 +256,8 @@ long play(int threadNum)	{
     return dt.count();
 }
 
-void init() {
-
+void init(long time) {
+	TIME = time;
 }
 
 int main()	{
