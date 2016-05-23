@@ -10,7 +10,7 @@ extern Player players[10];
 Point getPlayerPositions(int i);
 Point getBallPosition();
 void init();
-void play();
+long play(int threadNum);
 void stop();
 int getBoundaryBreadth();
 int getBoundaryHeight();
