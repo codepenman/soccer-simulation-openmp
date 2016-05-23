@@ -3,10 +3,8 @@ CC = g++
 DEBUG = -g
 OMPFLAGS = -fopenmp
 CFLAGS = -Wall -fPIC -c -std=c++14
-CFLAGS2 = -Wall -fPIC
 LFLAGS = -Wall -shared
-BOOSTFLAGS = /usr/local/lib/libboost_chrono.so /usr/local/lib/libboost_system.so -std=c++14
-BOOSTFLAGS2 = /usr/local/lib/libboost_chrono.a /usr/local/lib/libboost_system.a -std=c++14
+BOOSTFLAGS = /usr/local/lib/boost/libboost_chrono.so /usr/local/lib/boost/libboost_system.so -std=c++14
 
 _Main.so: $(OBJS)
 	$(CC) $(OMPFLAGS) $(LFLAGS) $(OBJS) $(BOOSTFLAGS) -o _Main.so

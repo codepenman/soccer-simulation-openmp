@@ -237,13 +237,13 @@ long play(int threadNum)	{
 
 				bool isInVicinity = isPlayerInBallVicinity(players[currentPlayer]);
 				if (isInVicinity) {
-					players[currentPlayer].setNearToBall(true);
-					players[currentPlayer].hitBall(&ball, players[rand()%10].getCurrentPosition(), 3);
+					#pragma omp critical
+					players[currentPlayer].hitBall(&ball, players[rand()%10].getCurrentPosition(), 3);									
 				} else {
-					players[currentPlayer].setNearToBall(false);
 					runTowardsBall(&players[currentPlayer]);					
 				}
 			}
+
 			#pragma omp single nowait	
 			{
 				updateBall();
