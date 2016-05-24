@@ -26,6 +26,7 @@ class FootballGround(object):
             for i in xrange(10):
                 self.points.append(Main.getPlayerPositions(i))
 
+
             print "-----"
             self.printPoints(oldPoints)
             print "-----"
@@ -38,16 +39,22 @@ class FootballGround(object):
                 print "Y movement", self.points[i].y - oldPoints[i].y
                 self.canvas.move(player, self.points[i].x - oldPoints[i].x, self.points[i].y - oldPoints[i].y)
                 i = i + 1
+
+            oldBall = self.ballPoint
+            self.ballPoint = Main.getBallPosition()
+            print "----"
+            # print self.ball.x, self.ball.y
+            self.canvas.move(self.ball, self.ballPoint.x - oldBall.x, self.ballPoint.y - oldBall.y)
             self.canvas.update()
 
     def play(self):
-        Main.play()
-        self.gameOn = False
+        Main.play(4)
+        # self.gameOn = False
 
     def __init__(self):
         self.gameOn = True
-        self.width = 800
-        self.height = 500
+        self.width = 350
+        self.height = 250
         self.root = Tk()
         self.canvas = Canvas(self.root, width=self.width, height = self.height)
         self.canvas.pack()
@@ -58,12 +65,15 @@ class FootballGround(object):
 
         self.players = []
         for point in self.points:
-            player = self.canvas.create_oval(point.x, point.y, point.x + 20, point.y + 20, outline='blue', fill='blue')
+            player = self.canvas.create_oval(point.x, point.y, point.x + 10, point.y + 10, outline='blue', fill='blue')
             self.players.append(player)
 
-        self.midline = self.canvas.create_line(self.width/2, 0, self.width/2, self.height)
+        self.ball = self.canvas.create_oval(point.x, point.y, point.x + 5, point.y + 5, outline='blue', fill='red')
         self.canvas.pack()
         #self.root.after(0, self.animation)
+
+        self.ballPoint = Main.getBallPosition()
+
         try:
             thread.start_new_thread(self.animation, ())
             thread.start_new_thread(self.play, ())

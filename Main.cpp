@@ -19,7 +19,7 @@ int DISTANCE_TO_BALL_TO_RUN = 10;
 //int PLAYER_VICINITY_TO_CAPTURE = 20;
 
 /*Time for which simulation will continue. Basically, count of while loop iterations*/
-long TIME = 100000;
+long TIME = 100;
 
 Player players[10];
 Ball ball;
@@ -193,11 +193,11 @@ void updateBall() {
 	p.y = currBallPosition.y + ball.getYMovement();
 
 	/* Ball is deflected if it reaches the boudary edges in X-Driection */
-	if(p.x == 0 || p.x == BREADTH)	{
+	if(p.x < 0 || p.x > BREADTH)	{
 		ball.setXMovement(ball.getXMovement() * -1);	}
 
 	/* Ball is deflected if it reaches the boudary edges in Y-Direction */
-	if(p.y == 0 || p.y == HEIGHT)	{
+	if(p.y < 0 || p.y > HEIGHT)	{
 		ball.setYMovement(ball.getYMovement() * -1);
 	}
 
@@ -237,8 +237,10 @@ long play(int threadNum)	{
 
 				bool isInVicinity = isPlayerInBallVicinity(players[currentPlayer]);
 				if (isInVicinity) {
-					players[currentPlayer].setNearToBall(true);
-					players[currentPlayer].hitBall(&ball, players[rand()%10].getCurrentPosition(), 3);
+					#pragma omp critical 
+					{
+						players[currentPlayer].hitBall(&ball, players[rand()%10].getCurrentPosition(), 3);
+					}
 				} else {
 					players[currentPlayer].setNearToBall(false);
 					runTowardsBall(&players[currentPlayer]);					
@@ -247,6 +249,7 @@ long play(int threadNum)	{
 			#pragma omp single nowait	
 			{
 				updateBall();
+				cout<<ball.getPosition().x<<","<<ball.getPosition().y<<endl;
 			}
 		}		
 	}
